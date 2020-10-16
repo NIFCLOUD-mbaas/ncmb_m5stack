@@ -1,0 +1,15 @@
+# Syntax Coloring Map For ncmb_m5stack
+
+# Datatypes (KEYWORD1)
+NCMB           KEYWORD1
+
+# Methods and Functions (KEYWORD2)
+init           KEYWORD2
+registerObject KEYWORD2
+getObject      KEYWORD2
+updateObject   KEYWORD2
+searchObject   KEYWORD2
+
+# Instances (KEYWORD2)
+
+# Constants (LITERAL1)
