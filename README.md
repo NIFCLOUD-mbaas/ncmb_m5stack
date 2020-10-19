@@ -171,19 +171,18 @@ if (response.isSuccess) {
 
 ### NCMB::searchObject
 
-- 説明: 指定オブジェクトに対して、フィールドの更新を行います。
+- 説明: クエリ条件に合致したオブジェクトの情報取得を行います。
 - 書式
 
 ```cpp
 #include "ncmb.h"
 
-NCMBResponse NCMB::updateObject(String className, String objectId, String content, String timestamp);
+NCMBResponse NCMB::searchObject(String className, String query, String timestamp);
 ```
 
 - 引数:
   - `className`: データストア クラス名
-  - `objectId`: オブジェクトID
-  - `content`: 更新フィールドと更新内容 (Json形式)
+  - `query`: 検索パラメタ
   - `timestamp`: タイムスタンプ (`[YYYY]-[MM]-[DD]T[HH]:[mm]:[ss].[sss]Z` 形式)
 - 戻り値:
   - NCMBResponse
