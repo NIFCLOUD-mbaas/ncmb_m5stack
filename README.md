@@ -2,9 +2,9 @@
 
 ## 概要
 
-ニフクラ mobile backend M5Stack SDKは、
+ニフクラ mobile backend M5Stack ライブラリは、
 モバイルアプリのバックエンド機能を提供するクラウドサービス
-[ニフクラ mobile backend](https://mbaas.nifcloud.com)の M5Stack 用ライブラリです。
+[ニフクラ mobile backend](https://mbaas.nifcloud.com) の M5Stack 用ライブラリです。
 
 データストアの一部機能について利用することが可能です。
 
@@ -14,6 +14,7 @@
 
 - M5Stack
 - Arduino IDE
+- M5Stack Library <https://github.com/m5stack/M5Stack>
 - Arduino core for the ESP32 <https://github.com/espressif/arduino-esp32>
   - ライブラリ内にて HTTPClient.h, base64.h , mbedtls/md.h を使用しています。
 
@@ -24,6 +25,12 @@
 ## ライセンス
 
 このライブラリのライセンスにつきましては LICENSE ファイルをご覧ください。
+
+## インストール
+
+- [ニフクラ mobile backend M5Stack ライブラリ](https://github.com/NIFCLOUD-mbaas/ncmb_m5stack) のページにある `[↓Code]` (Download code) ボタンより、 `"Download ZIP"` を選択しライブラリの zip ファイルをダウンロードします。
+- Arduino IDE を起動し、ツールバーより `"スケッチ"` → `"ZIP形式のライブラリをインストール"` を選択し、先ほどダウンロードしたライブラリを読み込み、ライブラリを利用可能にします。
+- インストール後は Arduino IDE ツールバーより `"ファイル"` → `"スケッチ例"` の `"カスタムライブラリのスケッチ例"` に `"ncmb_M5stack"` という項目が追加されます。この中の `"NCMBQuickStart"` からサンプルスケッチを開くことができます。
 
 ## リファレンス
 
@@ -307,16 +314,84 @@ void loop() {
 ### Json の操作
 
 オブジェクト登録、更新内容、レスポンス内容は Json 形式の文字列ですが Json オブジェクトでの操作機能は提供しておりません。
+そのためユーザー自身での文字列操作実装により必要情報の取得、Json 文字列の生成をおこなう必要があります。
 
-そのためユーザー自身での文字列操作実装により必要情報の取得、Json 文字列の生成をおこなう必要がございます。
+Jsonの生成例
+
+```cpp
+String targetValue1 = "takano-kun";
+float targetValue2 = 3.14;
+
+String requestContent = "{\"item1\":\"" + targetValue1 + "\",\"item2\":" + String(targetValue2) + "}";
+M5.Lcd.println(requestContent); // {"item1":"takano-kun","item2":3.14}
+```
+
+Json から必要情報の抽出例
+
+```cpp
+String responseContent = "{\"item1\":\"takano-kun\",\"item2\":3.14}";
+
+String targetValue1tmp = responseContent
+    .substring(responseContent.indexOf("\"item1\":") + String("\"item1\":\"").length()); // 取得したい文字列より前を除去
+String targetValue1 = targetValue1tmp.substring(0, targetValue1tmp.indexOf("\"")); // 取得したい文字列より後を除去
+M5.Lcd.println(targetValue1); // takano-kun
+
+String targetValue2tmp = responseContent
+    .substring(responseContent.indexOf("\"item2\":") + String("\"item2\":").length());
+float targetValue2 = targetValue2tmp
+    .substring(0, targetValue2tmp.indexOf("}")) // 文字列の場合は項目の終端がダブルクォーテーションであるが、数値などの場合は位置により `}`、`,` 2パターンが考えられるため。
+    .substring(0, targetValue2tmp.indexOf(","))
+    .toFloat();
+M5.Lcd.println(targetValue2); // 3.14
+```
+
+複雑な Json 操作が必要な場合は JSON Library for Arduino <https://github.com/arduino-libraries/Arduino_JSON> など Json 操作用のライブラリを導入することをご検討ください。
 
 ### URI エンコード
 
-検索パラメタにて URI エンコード文字列を用意する必要がありますが、こちらにつきましても URI エンコード化機能につきましては提供しておりません。そのためユーザー自身での文字列操作実装によりエンコードをおこなう必要がございます。
+検索パラメタにて URI エンコード文字列を用意する必要がありますが、こちらにつきましても URI エンコード化機能につきましては提供しておりません。そのためユーザー自身での文字列操作実装によりエンコードをおこなう必要があります。
 
 ### タイムスタンプ生成
 
-M5Stack 標準では内部時計を使用できません。そのためユーザー自身にてタイムスタンプ生成を実装していただく必要がございます。
+M5Stack は標準では内部時計を使用できません。そのためユーザー自身にてタイムスタンプ生成を実装していただく必要があります。
+
+time.h を用いた、タイムスタンプ実装例
+
+```cpp
+#include <time.h>
+
+// 事前に Wifi の接続が必要
+
+// 時刻取得の事前準備。実行時に１回だけ実行。時刻取得先であるNTPサーバは最大3箇所まで設定可能。
+configTime(0, 0, "ntp.nict.jp");
+
+// ...
+
+String timestamp = getTimestamp();
+
+// ...
+
+// タイムスタンプ取得関数
+String getTimestamp() {
+  struct tm timeInfo;
+  getLocalTime(&timeInfo);
+  // inde             012345678901234567890123
+  String timestamp = "20YY-MM-DDTHH:mm:ss.000Z";
+  timestamp.setCharAt(2, ((0 < (timeInfo.tm_year - 100) / 10) ? (timeInfo.tm_year - 100) / 10 : 0) + 48);
+  timestamp.setCharAt(3, (timeInfo.tm_year - 100) % 10 + 48);
+  timestamp.setCharAt(5, ((0 < (timeInfo.tm_mon + 1) / 10) ? (timeInfo.tm_mon + 1) / 10 : 0) + 48);
+  timestamp.setCharAt(6, (timeInfo.tm_mon + 1) % 10 + 48);
+  timestamp.setCharAt(8, ((0 < timeInfo.tm_mday / 10) ? timeInfo.tm_mday / 10 : 0) + 48);
+  timestamp.setCharAt(9, timeInfo.tm_mday % 10 + 48);
+  timestamp.setCharAt(11, ((0 < timeInfo.tm_hour / 10) ? timeInfo.tm_hour / 10 : 0) + 48);
+  timestamp.setCharAt(12, timeInfo.tm_hour % 10 + 48);
+  timestamp.setCharAt(14, ((0 < timeInfo.tm_min / 10) ? timeInfo.tm_min / 10 : 0) + 48);
+  timestamp.setCharAt(15, timeInfo.tm_min % 10 + 48);
+  timestamp.setCharAt(17, ((0 < timeInfo.tm_sec / 10) ? timeInfo.tm_sec / 10 : 0) + 48);
+  timestamp.setCharAt(18, timeInfo.tm_sec % 10 + 48);
+  return timestamp;  
+}
+```
 
 ## 参考URL集
 
