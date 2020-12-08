@@ -66,24 +66,34 @@ class NCMB {
     String m_clientKey;
     String m_domainName;
     String m_apiVersion;
+    String m_scriptDomainName;
+    String m_scriptApiVersion;
 
     String createSigniturePlaintextLastLine(String, String);
-    String createSigniturePlaintext(String, String, String, String);
-    String calculateSignature(String, String, String, String);
-    String getRequestURL(String, String);
-    NCMBResponse request(String, String, String, String, String);
+    String getDomainName(boolean);
+    String getApiVersion(boolean);
+    String createSigniturePlaintext(String, String, String, String, boolean);
+    String calculateSignature(String, String, String, String, boolean);
+    String getRequestURL(String, String, boolean);
+    NCMBResponse request(String, String, String, String, String, boolean);
     int requestMethod(HTTPClient *, String , String);
     NCMBResponse createResponse(int, HTTPClient *);
     String getResponseContents(HTTPClient *);
 
   public:
     NCMB();
-    void init(String, String, String = "mbaas.api.nifcloud.com", String = "2013-09-01");
+    void init(
+        String,
+        String,
+        String = "mbaas.api.nifcloud.com",
+        String = "2013-09-01",
+        String = "script.mbaas.api.nifcloud.com",
+        String = "2015-09-01");
     NCMBResponse registerObject(String, String, String);
     NCMBResponse getObject(String, String, String);
     NCMBResponse updateObject(String, String, String, String);
     NCMBResponse searchObject(String, String, String);
-
+    NCMBResponse executeScript(String, String, String, String);
 };
 
 #endif
