@@ -36,12 +36,13 @@ String NCMB::createSigniturePlaintext(
     String methodString,
     String timestamp,
     String path,
-    String query) {
+    String query,
+    boolean isScript) {
   String result =  methodString 
       + "\n"
-      + m_domainName
+      + getDomainName(isScript)
       + "\n/"
-      + m_apiVersion
+      + getApiVersion(isScript)
       + "/"
       + path
       + "\n"
@@ -49,12 +50,21 @@ String NCMB::createSigniturePlaintext(
   return result;
 }
 
+String NCMB::getDomainName(boolean isScript) {
+  return (isScript) ? m_scriptDomainName : m_domainName;
+}
+
+String NCMB::getApiVersion(boolean isScript) {
+  return (isScript) ? m_scriptApiVersion : m_apiVersion;
+}
+
 String NCMB::calculateSignature(
     String methodString,
     String timestamp,
     String path,
-    String query) {
-  String plaintext = createSigniturePlaintext(methodString, timestamp, path, query);
+    String query,
+    boolean isScript) {
+  String plaintext = createSigniturePlaintext(methodString, timestamp, path, query, isScript);
   unsigned char input[plaintext.length() + 1];
   plaintext.getBytes(input, sizeof(input));
   unsigned char key[m_clientKey.length() + 1]; 
@@ -75,8 +85,8 @@ String NCMB::calculateSignature(
   return base64::encode(signature, 32).c_str();
 }
 
-String NCMB::getRequestURL(String path, String query = "") {
-  String url = "https://" + m_domainName + "/" + m_apiVersion + "/" + path;
+String NCMB::getRequestURL(String path, String query, boolean isScript) {
+  String url = "https://" + getDomainName(isScript) + "/" + getApiVersion(isScript) + "/" + path;
   if(query != "") {
     url += "?" + query;
   }
@@ -88,10 +98,11 @@ NCMBResponse NCMB::request(
     String timestamp,
     String path,
     String query,
-    String content) {
+    String content,
+    boolean isScript = false) {
   HTTPClient httpClient;
-  String url = getRequestURL(path, query);
-  String signature = calculateSignature(methodString, timestamp, path, query);
+  String url = getRequestURL(path, query, isScript);
+  String signature = calculateSignature(methodString, timestamp, path, query, isScript);
   httpClient.begin(url, CA);
   httpClient.addHeader("Content-Type", "application/json");
   httpClient.addHeader("X-NCMB-Application-Key", m_applicationKey);
@@ -158,13 +169,23 @@ NCMB::NCMB() {
   m_clientKey = "";
   m_domainName = "mbaas.api.nifcloud.com";
   m_apiVersion = "2013-09-01";
+  m_scriptDomainName = "script.mbaas.api.nifcloud.com";
+  m_scriptApiVersion = "2015-09-01";
 }
 
-void NCMB::init(String applicationKey, String clientKey, String domainName, String apiVersion) {
+void NCMB::init(
+    String applicationKey,
+    String clientKey,
+    String domainName,
+    String apiVersion,
+    String scriptDomainName,
+    String scriptApiVersion) {
   m_applicationKey = applicationKey;
   m_clientKey = clientKey;
   m_domainName = domainName;
   m_apiVersion = apiVersion;
+  m_scriptDomainName = scriptDomainName;
+  m_scriptApiVersion = scriptApiVersion;
 }
 
 NCMBResponse NCMB::registerObject(String className, String content, String timestamp) {
@@ -186,3 +207,13 @@ NCMBResponse NCMB::searchObject(String className, String query, String timestamp
   String path = "classes/" + className;
   return request("GET", timestamp, path, query, "");
 }
+
+NCMBResponse NCMB::executeScript(
+    String scriptName,
+    String methodString,
+    String content,
+    String timestamp) {
+  String path = "script/" + scriptName;
+  return request(methodString, timestamp, path, "", content, true);
+}
+

@@ -213,6 +213,47 @@ if (response.isSuccess) {
     - NG: `where=%7B%22item1%22%3A%22takano-kun%22%7D&limit=1`
   - 詳しくは [こちら](https://mbaas.nifcloud.com/doc/current/rest/common/query.html) をご確認ください。
 
+### NCMB::executeScript
+
+- 説明: mobile backend に登録されているスクリプトを実行します。
+- 書式
+
+```cpp
+#include "ncmb.h"
+
+NCMBResponse NCMB::executeScript(String scriptName, String methodString, String content, String timestamp);
+```
+
+- 引数:
+  - `scriptName`: スクリプト名
+  - `methodString`: メソッド(`GET`, `POST`, `PUT` のみ)
+  - `content`: Json 形式のコンテンツ
+  - `timestamp`: タイムスタンプ (`[YYYY]-[MM]-[DD]T[HH]:[mm]:[ss].[sss]Z` 形式)
+- 戻り値:
+  - NCMBResponse
+- 使用例
+
+```cpp
+NCMBResponse response = ncmb.executeScript(
+    "sample.js", // スクリプト名
+    "POST", // メソッド
+    "{\"item1\":\"takano-kun\"}", // コンテンツ
+    "1986-02-04T12:34:56.123Z"); // タイムスタンプ
+if (response.isSuccess) {
+  // スクリプト実行成功時
+  // response.content に取得した内容が Json 形式文字列(String型)にて格納されている。
+} else {
+  // スクリプト実行失敗時
+  // response.content にエラーコードとエラーメッセージが Json 形式文字列(String型)にて格納されている。
+}
+```
+
+- 制限事項
+  - リクエストメソッドとして指定できるものは `GET`, `POST`, `PUT` のみです。
+  - 独自のヘッダーは利用できません。
+  - クエリストリングは利用できません。
+- スクリプト機能につきまして詳しくは [こちら](https://mbaas.nifcloud.com/doc/current/rest/script/scriptExecution.html) をご確認ください。
+
 ### NCMBResponse
 
 - 説明: リクエスト結果を格納する構造体です。
